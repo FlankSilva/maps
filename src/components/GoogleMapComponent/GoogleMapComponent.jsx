@@ -1,5 +1,6 @@
-import React, {useState} from 'react'
+import React, { useState, useEffect } from 'react'
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import Geocode from "react-geocode";
 
 const containerStyle = {
   width: '500px',
@@ -13,6 +14,35 @@ const center = {
 
 function MyComponent({ ...props }) {
   const [isOpen, setIsOpen] = useState(null)
+  const [mydata, setMydata] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  Geocode.setApiKey(process.env.REACT_APP_KEY)
+  Geocode.setLanguage("pt-br");
+
+  console.log(isOpen);
+  console.log(mydata);
+
+  useEffect(() => {
+    setLoading(true)
+
+    const newData = [...data]
+    data.map((item, index) => {
+      Geocode.fromAddress(item.address).then(
+        (response) => {
+          const { lat, lng } = response.results[0].geometry.location;
+
+          newData[index] = {
+            ...item,
+            lat,
+            lng
+          }
+        }
+      )
+      setMydata(newData)
+      setLoading(false)
+    })
+  }, [])
 
   const types = {
     teste: {
@@ -25,6 +55,12 @@ function MyComponent({ ...props }) {
     googleMapsApiKey: process.env.REACT_APP_KEY // AIzaSyA5_Sw8YOOaexn-HEq3tsXAt_zHTaajlBo
   })
 
+  if (loading) {
+    return (
+      <h1>Ola</h1>
+    )
+  }
+
   return isLoaded ? (
       <GoogleMap
         mapContainerStyle={containerStyle}
@@ -32,13 +68,10 @@ function MyComponent({ ...props }) {
         zoom={10}
         {...props}
       >
-        {data.map((item, index) => (
+        {mydata?.map((item, index) => (
           <Marker 
             position={{ lat: item.lat, lng: item.lng }}
-            onClick={() => setIsOpen({
-              lat: item.lat,
-              lng: item.lng
-            })}
+            onClick={() => setIsOpen(item)}
             icon={types.teste.icon}
           >
           </Marker>
@@ -47,7 +80,7 @@ function MyComponent({ ...props }) {
         {isOpen && (
           <InfoWindow
             position={{ lat: isOpen.lat, lng: isOpen.lng }}
-            onCloseClick={() => setIsOpen(false)}
+            onCloseClick={() => setIsOpen(null)}
           >
             <div>
               <p>{isOpen.lat}, {isOpen.lng}</p>
@@ -61,6 +94,21 @@ function MyComponent({ ...props }) {
 export default React.memo(MyComponent)
 
 const data = [
-  { lat: -22.9416066, lng: -46.9998334 },
-  { lat: -22.5416066, lng: -46.5998334 }
+  {
+    name: 'Nome 1',
+    address: 'rua um 154 satélite iris campinas'
+  },
+  {
+    name: 'Nome 2',
+    address: 'av francisco glicerio 1046'
+  },
+  {
+    name: 'Nome 3',
+    address: 'rua irma serafina, 863'
+  }
 ]
+
+// const data = [
+//   { lat: -22.9416066, lng: -46.9998334 },
+//   { lat: -22.5416066, lng: -46.5998334 }
+// ]
