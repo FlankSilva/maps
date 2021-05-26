@@ -17,32 +17,33 @@ function MyComponent({ ...props }) {
   const [mydata, setMydata] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  console.log(mydata);
+
   Geocode.setApiKey(process.env.REACT_APP_KEY)
   Geocode.setLanguage("pt-br");
 
-  console.log(isOpen);
-  console.log(mydata);
-
   useEffect(() => {
-    setLoading(true)
+    toConvertAddress()
+  }, [])
 
+  const toConvertAddress = async () => {
     const newData = [...data]
-    data.map((item, index) => {
-      Geocode.fromAddress(item.address).then(
-        (response) => {
-          const { lat, lng } = response.results[0].geometry.location;
 
-          newData[index] = {
+    const promises = data.map(async (item, index) => {
+      const response = await Geocode.fromAddress(item.address)
+      const { lat, lng } = response.results[0].geometry.location;
+
+      newData[index] = {
             ...item,
             lat,
             lng
           }
-        }
-      )
-      setMydata(newData)
-      setLoading(false)
     })
-  }, [])
+
+    Promise.all(promises).then((array) => {
+      setMydata(newData)
+    })
+  }
 
   const types = {
     teste: {
@@ -54,12 +55,6 @@ function MyComponent({ ...props }) {
     id: 'google-map-script',
     googleMapsApiKey: process.env.REACT_APP_KEY // AIzaSyA5_Sw8YOOaexn-HEq3tsXAt_zHTaajlBo
   })
-
-  if (loading) {
-    return (
-      <h1>Ola</h1>
-    )
-  }
 
   return isLoaded ? (
       <GoogleMap
